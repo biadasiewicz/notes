@@ -1,0 +1,13 @@
+bin/
+build/
+temp/
+run
+
+tests/bin/
+tests/build/
+tests/temp/
+tests/run
+tests/tests.sh
+
+*.swp
+.debug_time
