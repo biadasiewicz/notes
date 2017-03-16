@@ -14,14 +14,14 @@ namespace notes
 class Archive
 {
 public:
-	using Container = std::multiset<Note>;
+	using Container = std::set<Note>;
 	using Iterator = Container::const_iterator;
 
 	template<typename... Args>
 	void add(Args&&... args);
 
-	template<typename T>
-	void serialize(T& ar, std::uint32_t ver);
+	void serialize(cereal::XMLOutputArchive& ar, std::uint32_t ver);
+	void serialize(cereal::XMLInputArchive& ar, std::uint32_t ver);
 
 	Iterator begin() const;
 	Iterator end() const;
@@ -39,14 +39,6 @@ void Archive::add(Args&&... args)
 		m_cont.emplace(std::forward<Args>(args)...);
 	} catch(...) {
 		throw Error("failed to add new note to archive");
-	}
-}
-
-template<typename T>
-void Archive::serialize(T& ar, std::uint32_t ver)
-{
-	if(ver <= 1) {
-		ar(m_cont);
 	}
 }
 

@@ -36,7 +36,7 @@ TEST_CASE("archive serialization", "[class_Archive][serialization]")
 			
 		REQUIRE(ar.size() == loaded_ar.size());
 		REQUIRE(find(loaded_ar, n1));
-		REQUIRE(find(loaded_ar, n2));
+		REQUIRE_FALSE(find(loaded_ar, n2));
 		REQUIRE(find(loaded_ar, n3));
 	}
 
