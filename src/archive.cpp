@@ -16,6 +16,8 @@ void Archive::serialize(cereal::XMLInputArchive& ar, std::uint32_t ver)
 
 		m_cont.clear();
 		m_cont.insert(cont.begin(), cont.end());
+	} else if( ver == 2) {
+		ar(m_cont);
 	}
 }
 

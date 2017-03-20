@@ -59,6 +59,6 @@ inline Archive::Container::size_type Archive::size() const noexcept
 
 }
 
-CEREAL_CLASS_VERSION( notes::Archive, 1 );
+CEREAL_CLASS_VERSION( notes::Archive, 2 );
 
 #endif
