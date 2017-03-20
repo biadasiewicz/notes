@@ -45,7 +45,7 @@ public:
 private:
 	Tags m_tags;
 	std::string m_note;
-	time_t m_time_stamp;
+	time_t m_time_stamp = 0;
 
 friend std::ostream& operator<<(std::ostream& os, Note const& note);
 };

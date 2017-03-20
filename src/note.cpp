@@ -37,7 +37,7 @@ Note& Note::operator+=(std::string note)
 {
 	std::string temp;
 	temp.reserve(this->note().size() + 2 + note.size());
-	
+
 	temp = this->note();
 	temp += "; ";
 	temp += std::move(note);
