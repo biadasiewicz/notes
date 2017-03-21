@@ -8,6 +8,7 @@
 #include <cereal/archives/xml.hpp>
 #include <set>
 #include <algorithm>
+#include <iosfwd>
 
 namespace notes
 {
@@ -79,6 +80,8 @@ inline Archive::Container::size_type Archive::size() const noexcept
 {
 	return m_cont.size();
 }
+
+std::ostream& operator<< (std::ostream& os, Archive const& ar);
 
 }
 

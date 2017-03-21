@@ -1,5 +1,6 @@
 #include <catch.hpp>
 #include <fstream>
+#include <iostream>
 
 #include "archive.h"
 
@@ -21,26 +22,28 @@ TEST_CASE("archive serialization", "[class_Archive][serialization]")
 	ar.add(n2);
 	ar.add(n3);
 
-	{
-		std::ofstream file(path);
-		cereal::XMLOutputArchive oa(file);
-		oa(ar);
+	SECTION("serialization") {
+		{
+			std::ofstream file(path);
+			cereal::XMLOutputArchive oa(file);
+			oa(ar);
+		}
+
+		{
+			notes::Archive loaded_ar;
+
+			std::ifstream file(path);
+			cereal::XMLInputArchive ia(file);
+			ia(loaded_ar);
+
+			REQUIRE(ar.size() == loaded_ar.size());
+			REQUIRE(find(loaded_ar, n1));
+			REQUIRE_FALSE(find(loaded_ar, n2));
+			REQUIRE(find(loaded_ar, n3));
+		}
 	}
 
-	{
-		notes::Archive loaded_ar;
-
-		std::ifstream file(path);
-		cereal::XMLInputArchive ia(file);
-		ia(loaded_ar);
-
-		REQUIRE(ar.size() == loaded_ar.size());
-		REQUIRE(find(loaded_ar, n1));
-		REQUIRE_FALSE(find(loaded_ar, n2));
-		REQUIRE(find(loaded_ar, n3));
-	}
-
-	{
+	SECTION("finding") {
 		auto it = ar.find_if([](auto const& elem)
 			{ return elem.time_stamp() == 1; });
 
@@ -52,7 +55,7 @@ TEST_CASE("archive serialization", "[class_Archive][serialization]")
 		REQUIRE(it == ar.end());
 	}
 
-	{
+	SECTION("removing") {
 		auto size = ar.size();
 
 		ar.remove_if([](auto const& x)
@@ -68,5 +71,11 @@ TEST_CASE("archive serialization", "[class_Archive][serialization]")
 		REQUIRE(size != ar.size());
 		REQUIRE(ar.size() == 0);
 	}
+
+	/*
+	 *SECTION("printing") {
+	 *        std::cout << ar << std::endl;
+	 *}
+	 */
 
 }
