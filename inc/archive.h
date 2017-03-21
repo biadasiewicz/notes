@@ -7,6 +7,7 @@
 #include <cereal/types/set.hpp>
 #include <cereal/archives/xml.hpp>
 #include <set>
+#include <algorithm>
 
 namespace notes
 {
@@ -19,6 +20,12 @@ public:
 
 	template<typename... Args>
 	void add(Args&&... args);
+
+	template<typename TPredicate>
+	Iterator find_if(TPredicate pred) const;
+
+	template<typename TPredicate>
+	void remove_if(TPredicate pred);
 
 	void serialize(cereal::XMLOutputArchive& ar, std::uint32_t ver);
 	void serialize(cereal::XMLInputArchive& ar, std::uint32_t ver);
@@ -39,6 +46,22 @@ void Archive::add(Args&&... args)
 		m_cont.emplace(std::forward<Args>(args)...);
 	} catch(...) {
 		throw Error("failed to add new note to archive");
+	}
+}
+
+template<typename TPredicate>
+Archive::Iterator Archive::find_if(TPredicate pred) const
+{
+	return std::find_if(begin(), end(), pred);
+}
+
+template<typename TPredicate>
+void Archive::remove_if(TPredicate pred)
+{
+	for(auto it = begin(); it != end(); ++it) {
+		if(pred(*it)) {
+			m_cont.erase(it);
+		}
 	}
 }
 

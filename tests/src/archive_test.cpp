@@ -33,11 +33,40 @@ TEST_CASE("archive serialization", "[class_Archive][serialization]")
 		std::ifstream file(path);
 		cereal::XMLInputArchive ia(file);
 		ia(loaded_ar);
-			
+
 		REQUIRE(ar.size() == loaded_ar.size());
 		REQUIRE(find(loaded_ar, n1));
 		REQUIRE_FALSE(find(loaded_ar, n2));
 		REQUIRE(find(loaded_ar, n3));
+	}
+
+	{
+		auto it = ar.find_if([](auto const& elem)
+			{ return elem.time_stamp() == 1; });
+
+		REQUIRE(it != ar.end());
+
+		it = ar.find_if([](auto const& elem)
+			{ return elem.time_stamp() == 3; });
+
+		REQUIRE(it == ar.end());
+	}
+
+	{
+		auto size = ar.size();
+
+		ar.remove_if([](auto const& x)
+			{ return x.time_stamp() == 1; });
+
+		REQUIRE(size != ar.size());
+
+		--size;
+
+		ar.remove_if([](auto const& x)
+			{ return x.time_stamp() == 2; });
+
+		REQUIRE(size != ar.size());
+		REQUIRE(ar.size() == 0);
 	}
 
 }
