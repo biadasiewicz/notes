@@ -35,6 +35,7 @@ public:
 	Iterator end() const;
 
 	Container::size_type size() const noexcept;
+	bool empty() const noexcept;
 
 private:
 	Container m_cont;
@@ -79,6 +80,11 @@ inline Archive::Iterator Archive::end() const
 inline Archive::Container::size_type Archive::size() const noexcept
 {
 	return m_cont.size();
+}
+
+inline bool Archive::empty() const noexcept
+{
+	return size() == 0;
 }
 
 std::ostream& operator<< (std::ostream& os, Archive const& ar);

@@ -69,7 +69,7 @@ TEST_CASE("archive serialization", "[class_Archive][serialization]")
 			{ return x.time_stamp() == 2; });
 
 		REQUIRE(size != ar.size());
-		REQUIRE(ar.size() == 0);
+		REQUIRE(ar.empty());
 	}
 
 	/*
