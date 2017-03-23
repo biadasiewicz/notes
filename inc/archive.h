@@ -27,6 +27,7 @@ public:
 
 	template<typename TPredicate>
 	void remove_if(TPredicate pred);
+	void remove(Iterator it);
 
 	void serialize(cereal::XMLOutputArchive& ar, std::uint32_t ver);
 	void serialize(cereal::XMLInputArchive& ar, std::uint32_t ver);

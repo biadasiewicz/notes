@@ -65,8 +65,8 @@ TEST_CASE("archive serialization", "[class_Archive][serialization]")
 
 		--size;
 
-		ar.remove_if([](auto const& x)
-			{ return x.time_stamp() == 2; });
+		auto it = ar.begin();
+		ar.remove(it);
 
 		REQUIRE(size != ar.size());
 		REQUIRE(ar.empty());

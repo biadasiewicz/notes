@@ -4,6 +4,11 @@
 namespace notes
 {
 
+void Archive::remove(Iterator it)
+{
+	m_cont.erase(it);
+}
+
 void Archive::serialize(cereal::XMLOutputArchive& ar, std::uint32_t )
 {
 	ar(m_cont);
