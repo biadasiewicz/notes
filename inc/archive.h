@@ -38,6 +38,9 @@ public:
 	Container::size_type size() const noexcept;
 	bool empty() const noexcept;
 
+	bool operator==(Archive const& rhs) const;
+	bool operator!=(Archive const& rhs) const;
+
 private:
 	Container m_cont;
 };

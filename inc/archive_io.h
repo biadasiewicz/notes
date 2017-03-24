@@ -2,12 +2,13 @@
 #define ARCHIVE_IO_H
 
 #include "errors.h"
-#include "archive.h"
 #include <ctime>
 #include <boost/filesystem.hpp>
 
 namespace notes
 {
+
+class Archive;
 
 class Archive_io_error : public Error
 {
@@ -54,6 +55,9 @@ make_path_from_date
   std::string day );
 
 boost::filesystem::path make_path_from_date(time_t t);
+
+void load(Archive& ar, boost::filesystem::path const& path);
+void save(Archive& ar, boost::filesystem::path const& path);
 
 }
 

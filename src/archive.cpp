@@ -27,6 +27,16 @@ void Archive::serialize(cereal::XMLInputArchive& ar, std::uint32_t ver)
 	}
 }
 
+bool Archive::operator==(Archive const& rhs) const
+{
+	return m_cont == rhs.m_cont;
+}
+
+bool Archive::operator!=(Archive const& rhs) const
+{
+	return m_cont != rhs.m_cont;
+}
+
 std::ostream& operator<< (std::ostream& os, Archive const& ar)
 {
 	auto it = ar.begin();
