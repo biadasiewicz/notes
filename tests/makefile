@@ -12,9 +12,9 @@ LIBS =
 # General compiler flags
 COMPILE_FLAGS = -std=c++17 -Wall -Wextra -pipe
 # Additional release-specific flags
-RCOMPILE_FLAGS = -D NDEBUG -O3 
+RCOMPILE_FLAGS = -D NDEBUG -O3
 # Additional debug-specific flags
-DCOMPILE_FLAGS = -D DEBUG -g3 -O0
+DCOMPILE_FLAGS = -D DEBUG -g3 -O0 -D NOTES_TESTS
 # Add additional include paths
 INCLUDES = -I inc -I ../inc
 # General linker settings
