@@ -3,6 +3,8 @@
 
 #include "errors.h"
 #include "archive.h"
+#include <ctime>
+#include <boost/filesystem.hpp>
 
 namespace notes
 {
@@ -44,6 +46,14 @@ public:
 		: Archive_save_error("error while encrypting: " + msg)
 	{}
 };
+
+boost::filesystem::path
+make_path_from_date
+( std::string year,
+  std::string month,
+  std::string day );
+
+boost::filesystem::path make_path_from_date(time_t t);
 
 }
 
