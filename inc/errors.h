@@ -29,9 +29,8 @@ public:
 class Empty_path_error : public Filesystem_error
 {
 public:
-	Empty_path_error(boost::filesystem::path const& p,
-			std::string msg = "empty path")
-		: Filesystem_error(msg, p)
+	Empty_path_error(std::string msg = "empty path")
+		: Filesystem_error(msg)
 	{
 
 	}
