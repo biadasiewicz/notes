@@ -19,7 +19,7 @@ public:
 class Archive_load_error : public Archive_io_error
 {
 public:
-	Archive_load_error(std::string const& msg)
+	Archive_load_error(std::string const& msg = "unknown")
 		: Archive_io_error("failed to laod archive: " + msg)
 	{}
 };
@@ -27,7 +27,7 @@ public:
 class Archive_save_error : public Archive_io_error
 {
 public:
-	Archive_save_error(std::string const& msg)
+	Archive_save_error(std::string const& msg = "unknown")
 		: Archive_io_error("failed to save archive: " + msg)
 	{}
 };
@@ -35,7 +35,7 @@ public:
 class Archive_decryption_error : public Archive_load_error
 {
 public:
-	Archive_decryption_error(std::string const& msg)
+	Archive_decryption_error(std::string const& msg = "unknown")
 		: Archive_load_error("error while decrypting: " + msg)
 	{}
 };
@@ -43,7 +43,7 @@ public:
 class Archive_encryption_error : public Archive_save_error
 {
 public:
-	Archive_encryption_error(std::string const& msg)
+	Archive_encryption_error(std::string const& msg = "unknown")
 		: Archive_save_error("error while encrypting: " + msg)
 	{}
 };

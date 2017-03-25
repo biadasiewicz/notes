@@ -69,51 +69,62 @@ void generic_serialize(Archive& ar, fs::path const& path)
 
 static std::string to_encrypted_string(std::string const& text)
 {
-	byte key[ CryptoPP::AES::DEFAULT_KEYLENGTH ];
-	byte iv[ CryptoPP::AES::BLOCKSIZE ];
+	try {
+		byte key[ CryptoPP::AES::DEFAULT_KEYLENGTH ];
+		byte iv[ CryptoPP::AES::BLOCKSIZE ];
 
-        memset( key, 0x00, CryptoPP::AES::DEFAULT_KEYLENGTH );
-        memset( iv, 0x00, CryptoPP::AES::BLOCKSIZE );
+		memset( key, 0x00, CryptoPP::AES::DEFAULT_KEYLENGTH );
+		memset( iv, 0x00, CryptoPP::AES::BLOCKSIZE );
 
-	CryptoPP::AES::Encryption aes_encryption(
-		key, CryptoPP::AES::DEFAULT_KEYLENGTH);
-	CryptoPP::CBC_Mode_ExternalCipher::Encryption cbc_encryption(
-		aes_encryption, iv);
+		CryptoPP::AES::Encryption aes_encryption(
+			key, CryptoPP::AES::DEFAULT_KEYLENGTH);
+		CryptoPP::CBC_Mode_ExternalCipher::Encryption cbc_encryption(
+			aes_encryption, iv);
 
-	std::string ciphertext;
-	CryptoPP::StreamTransformationFilter stf_encryptor(cbc_encryption,
-		new CryptoPP::StringSink(ciphertext));
-	stf_encryptor.Put(reinterpret_cast<const unsigned char*>(
-		text.c_str()), text.length());
-	stf_encryptor.MessageEnd();
+		std::string ciphertext;
+		CryptoPP::StreamTransformationFilter stf_encryptor(cbc_encryption,
+			new CryptoPP::StringSink(ciphertext));
+		stf_encryptor.Put(reinterpret_cast<const unsigned char*>(
+			text.c_str()), text.length());
+		stf_encryptor.MessageEnd();
 
-	return ciphertext;
+		return ciphertext;
+	} catch(std::exception& e) {
+		throw Archive_encryption_error(e.what());
+	} catch(...) {
+		throw Archive_encryption_error{};
+	}
 }
 
 static std::string to_decrypted_string(std::string const& encrypted)
 {
-	byte key[ CryptoPP::AES::DEFAULT_KEYLENGTH ];
-	byte iv[ CryptoPP::AES::BLOCKSIZE ];
+	try {
+		byte key[ CryptoPP::AES::DEFAULT_KEYLENGTH ];
+		byte iv[ CryptoPP::AES::BLOCKSIZE ];
 
-        memset( key, 0x00, CryptoPP::AES::DEFAULT_KEYLENGTH );
-        memset( iv, 0x00, CryptoPP::AES::BLOCKSIZE );
+		memset( key, 0x00, CryptoPP::AES::DEFAULT_KEYLENGTH );
+		memset( iv, 0x00, CryptoPP::AES::BLOCKSIZE );
 
-	CryptoPP::AES::Decryption aes_decryption(key,
-		CryptoPP::AES::DEFAULT_KEYLENGTH);
-	CryptoPP::CBC_Mode_ExternalCipher::Decryption cbc_decryption(
-		aes_decryption, iv);
+		CryptoPP::AES::Decryption aes_decryption(key,
+			CryptoPP::AES::DEFAULT_KEYLENGTH);
+		CryptoPP::CBC_Mode_ExternalCipher::Decryption cbc_decryption(
+			aes_decryption, iv);
 
-	std::string decrypted;
-	decrypted.reserve(encrypted.length() + 1000);
+		std::string decrypted;
+		decrypted.reserve(encrypted.length() + 1000);
 
-	CryptoPP::StreamTransformationFilter stf_decryptor(cbc_decryption,
-		new CryptoPP::StringSink(decrypted));
-	stf_decryptor.Put(reinterpret_cast<const unsigned char*>(
-		encrypted.c_str()), encrypted.size());
-	stf_decryptor.MessageEnd();
+		CryptoPP::StreamTransformationFilter stf_decryptor(cbc_decryption,
+			new CryptoPP::StringSink(decrypted));
+		stf_decryptor.Put(reinterpret_cast<const unsigned char*>(
+			encrypted.c_str()), encrypted.size());
+		stf_decryptor.MessageEnd();
 
-
-	return decrypted;
+		return decrypted;
+	} catch(std::exception& e) {
+		throw Archive_decryption_error(e.what());
+	} catch(...) {
+		throw Archive_decryption_error{};
+	}
 }
 
 static std::string to_string(Archive& ar)
@@ -142,41 +153,65 @@ static Archive from_string(std::string str)
 static void save(std::string text, boost::filesystem::path const& path)
 {
 	std::ofstream file(path.string(), std::ios::binary);
+	if(!file) {
+		throw std::runtime_error(
+			std::string("failed to open file for save: ") +
+			strerror(errno));
+	}
 
 	file << text;
+
+	if(file.bad() || file.fail()) {
+		throw std::runtime_error(
+			std::string("error while saving file: ") +
+			strerror(errno));
+	}
 }
 
 static std::string load(boost::filesystem::path const& path)
 {
 	std::ifstream file(path.string(), std::ios::binary);
+	if(!file) {
+		throw std::runtime_error(
+			std::string("failed to open file for load: ") +
+			strerror(errno));
+	}
+
 	std::ostringstream oss;
 	oss << file.rdbuf();
+
+	if(oss.bad() || oss.fail()) {
+		throw std::runtime_error(
+			std::string("error while loading file: ") +
+			strerror(errno));
+	}
+
 	return oss.str();
-/*
- *        std::string text;
- *
- *        file.seekg(0, std::ios::end);
- *        text.reserve(file.tellg());
- *        file.seekg(0, std::ios::beg);
- *
- *        text.assign(std::istreambuf_iterator<char>(file),
- *                        std::istreambuf_iterator<char>());
- *
- *	return text;
- */
 }
 
 void save(Archive& ar, boost::filesystem::path const& path)
 {
-	auto str = to_string(ar);
-	auto encrypted = to_encrypted_string(str);
-	save(encrypted, path);
+	try {
+		auto str = to_string(ar);
+		auto encrypted = to_encrypted_string(str);
+		save(encrypted, path);
+	} catch(std::exception& e) {
+		throw Archive_save_error(e.what());
+	} catch(...) {
+		throw Archive_save_error{};
+	}
 }
 
 void load(Archive& ar, boost::filesystem::path const& path)
 {
-	std::string encrypted = load(path);
-	ar = from_string(to_decrypted_string(encrypted));
+	try {
+		std::string encrypted = load(path);
+		ar = from_string(to_decrypted_string(encrypted));
+	} catch(std::exception& e) {
+		throw Archive_load_error(e.what());
+	} catch(...) {
+		throw Archive_load_error{};
+	}
 }
 
 }
