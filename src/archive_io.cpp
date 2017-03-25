@@ -12,7 +12,10 @@
 #include <streambuf>
 #include <sstream>
 #include <functional>
+#include <regex>
 namespace fs = boost::filesystem;
+
+#define DAY_SEC 86400
 
 namespace notes
 {
@@ -212,6 +215,64 @@ void load(Archive& ar, boost::filesystem::path const& path)
 	} catch(...) {
 		throw Archive_load_error{};
 	}
+}
+
+fs::path parse_date_as_path(std::string const& date)
+{
+	fs::path p;
+
+	if(date == "today") {
+		p = make_path_from_date(time(0));
+	} else if(date == "yesterday") {
+		p = make_path_from_date(time(0) - DAY_SEC);
+	} else if(date.substr(0, 4) == "ago=") {
+		auto days = date.substr(4);
+		int d = 0;
+		try {
+			if(days.empty()) {
+				throw std::runtime_error("days required");
+			}
+
+			d = std::stoi(days);
+			if(d < 0) {
+				throw std::runtime_error(std::to_string(d));
+			}
+
+			auto t = time(0);
+			for(int i = 0; i < d; ++i) {
+				t -= DAY_SEC;
+			}
+
+			p = make_path_from_date(t);
+
+		} catch(...) {
+			throw std::runtime_error(std::string("invalid days ago: ") +
+				days);
+		}
+	} else if(date == "last") {
+		auto t = time(0);
+		fs::directory_iterator it(user_config.archive_path());
+		int count = std::distance(begin(it), end(it));
+
+		while(!fs::exists((p = make_path_from_date(t))) && count > 0) {
+			t -= DAY_SEC;
+			--count;
+		}
+	} else {
+		std::regex reg("([0-9]+)/([0-9]+)/([0-9]+)");
+		std::smatch match;
+		if(std::regex_match(date, match, reg)) {
+			p = make_path_from_date(match[1], match[2], match[3]);
+		}
+	}
+
+	if(p.empty()) {
+		throw Error("invalid date format: " + date);
+	} else if(!fs::exists(p)) {
+		throw Error("archive at this date not exists: " + date);
+	}
+
+	return p;
 }
 
 }

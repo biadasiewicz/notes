@@ -18,7 +18,7 @@ DCOMPILE_FLAGS = -D DEBUG -g3 -O0 -D NOTES_TESTS
 # Add additional include paths
 INCLUDES = -I inc -I ../inc
 # General linker settings
-LINK_FLAGS = -lpthread -lboost_filesystem -lboost_system -lcrypto++
+LINK_FLAGS = -lpthread -lboost_program_options -lboost_filesystem -lboost_system -lcrypto++
 # Additional release-specific linker settings
 RLINK_FLAGS =
 # Additional debug-specific linker settings

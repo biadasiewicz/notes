@@ -10,7 +10,7 @@ TEST_CASE("archive filename")
 
 
 	std::string year = "2017";
-	std::string month = "03";
+	std::string month = "3";
 	std::string day = "24";
 	auto p1 = notes::make_path_from_date(year, month, day);
 
