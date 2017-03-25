@@ -35,6 +35,8 @@ public:
 	Iterator begin() const;
 	Iterator end() const;
 
+	Iterator index(int index = -1) const;
+
 	Container::size_type size() const noexcept;
 	bool empty() const noexcept;
 

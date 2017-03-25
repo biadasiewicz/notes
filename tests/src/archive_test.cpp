@@ -53,6 +53,14 @@ TEST_CASE("archive serialization", "[class_Archive][serialization]")
 			{ return elem.time_stamp() == 3; });
 
 		REQUIRE(it == ar.end());
+
+		auto index = ar.index(0);
+		REQUIRE(index != ar.end());
+
+		auto last = ar.index();
+		REQUIRE(index != ar.end());
+
+		REQUIRE_THROWS(ar.index(123));
 	}
 
 	SECTION("removing") {

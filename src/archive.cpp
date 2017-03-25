@@ -27,6 +27,24 @@ void Archive::serialize(cereal::XMLInputArchive& ar, std::uint32_t ver)
 	}
 }
 
+Archive::Iterator Archive::index(int index) const
+{
+	if(index < 0) {
+		index = size() == 0 ? 0 : size() - 1;
+	}
+
+	if(index >= static_cast<int>(size())) {
+		throw Error("invalid note index in archive: " +
+			std::to_string(index));
+	}
+
+	auto it = begin();
+	while(index--) {
+		++it;
+	}
+	return it;
+}
+
 bool Archive::operator==(Archive const& rhs) const
 {
 	return m_cont == rhs.m_cont;
