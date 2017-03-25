@@ -2,8 +2,8 @@
 #define ARCHIVE_IO_H
 
 #include "errors.h"
-#include <ctime>
 #include <boost/filesystem.hpp>
+#include <ctime>
 
 namespace notes
 {

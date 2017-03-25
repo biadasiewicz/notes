@@ -36,12 +36,13 @@ TEST_CASE("archive save/load")
 	ar.add("note 2", 900000);
 	ar.add("note 3", 9900000);
 
-	notes::save(ar, path);
+	SECTION("load and save") {
+		notes::save(ar, path);
 
+		notes::Archive loaded;
+		REQUIRE(loaded != ar);
 
-	notes::Archive loaded;
-	REQUIRE(loaded != ar);
-
-	notes::load(loaded, path);
-	REQUIRE(ar == loaded);
+		notes::load(loaded, path);
+		REQUIRE(ar == loaded);
+	}
 }
