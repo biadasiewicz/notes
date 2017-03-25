@@ -149,16 +149,21 @@ static void save(std::string text, boost::filesystem::path const& path)
 static std::string load(boost::filesystem::path const& path)
 {
 	std::ifstream file(path.string(), std::ios::binary);
-	std::string text;
-
-	file.seekg(0, std::ios::end);
-	text.reserve(file.tellg());
-	file.seekg(0, std::ios::beg);
-
-	text.assign(std::istreambuf_iterator<char>(file),
-			std::istreambuf_iterator<char>());
-
-	return text;
+	std::ostringstream oss;
+	oss << file.rdbuf();
+	return oss.str();
+/*
+ *        std::string text;
+ *
+ *        file.seekg(0, std::ios::end);
+ *        text.reserve(file.tellg());
+ *        file.seekg(0, std::ios::beg);
+ *
+ *        text.assign(std::istreambuf_iterator<char>(file),
+ *                        std::istreambuf_iterator<char>());
+ *
+ *	return text;
+ */
 }
 
 void save(Archive& ar, boost::filesystem::path const& path)
