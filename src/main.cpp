@@ -98,8 +98,6 @@ void run(int argc, char** argv)
 
 		fs::path path;
 		if(read[0] == '#') {
-			//read.erase(read.begin());
-
 			fs::sorted_directory_iterator iter(
 				notes::user_config.archive_path(),
 					notes::sort_archive_by_date);
