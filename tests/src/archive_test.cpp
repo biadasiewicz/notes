@@ -61,6 +61,11 @@ TEST_CASE("archive serialization", "[class_Archive][serialization]")
 		REQUIRE(index != ar.end());
 
 		REQUIRE_THROWS(ar.index(123));
+
+		notes::Archive empty_ar;
+		REQUIRE_THROWS(empty_ar.index(123));
+
+		REQUIRE_THROWS(empty_ar.index());
 	}
 
 	SECTION("removing") {

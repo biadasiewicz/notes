@@ -29,6 +29,10 @@ void Archive::serialize(cereal::XMLInputArchive& ar, std::uint32_t ver)
 
 Archive::Iterator Archive::index(int index) const
 {
+	if(empty()) {
+		throw Error("archive is empty");
+	}
+
 	if(index < 0) {
 		index = size() == 0 ? 0 : size() - 1;
 	}
