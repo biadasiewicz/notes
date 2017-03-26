@@ -1,6 +1,7 @@
 #include "user.h"
 #include "archive.h"
 #include "archive_io.h"
+#include "sorted_directory_iterator.hpp"
 #include <boost/program_options.hpp>
 #include <iostream>
 #include <regex>
@@ -22,13 +23,35 @@ void parse_date_and_index(string const& arg, string& date, int& index)
 	index = std::stoi(match[2]);
 }
 
-int main(int argc, char** argv)
+static std::tuple<int,int,int> parse_archive_filename(fs::path const& p)
+{
+	static std::regex reg("([0-9]+)_([0-9]+)_([0-9]+)");
+	std::smatch m;
+	decltype(auto) filename = p.filename().string();
+
+	if(!std::regex_match(filename, m, reg)) {
+		throw std::logic_error("invalid archive name: " + filename);
+	}
+
+	using std::stoi;
+	return std::make_tuple(stoi(m[1].str()), stoi(m[2].str()), stoi(m[3].str()));
+}
+
+static bool sort_by_date(fs::directory_entry const& p1, fs::directory_entry const& p2)
+{
+	auto m1 = parse_archive_filename(p1.path());
+	auto m2 = parse_archive_filename(p2.path());
+
+	return m1 < m2;
+}
+
+void run(int argc, char** argv)
 {
 	string write;
 	string date_to_write;
-	string read{"last"};
-	string edit{"last:-1"};
-	string remove{"last:-1"};
+	string read;
+	string edit;
+	string remove;
 
 	po::options_description desc("notes application usage");
 	desc.add_options()
@@ -36,8 +59,8 @@ int main(int argc, char** argv)
 		("write,w", po::value<string>(&write), "note to write to archive")
 		("date,d", po::value<string>(&date_to_write), "combined with --write; at this date note will be written")
 		("read,r", po::value<string>(&read), "date that will be readed")
-		("edit", po::value<string>(&edit), "date and index in archive that will be edited")
-		("remove", po::value<string>(&remove), "date and index in archive that will be removed")
+		("edit", po::value<string>(&edit), "date and index in archive that will be edited [date:index]")
+		("remove", po::value<string>(&remove), "date and index in archive that will be removed [date:index]")
 		;
 
 	po::variables_map vm;
@@ -46,7 +69,6 @@ int main(int argc, char** argv)
 
 	if(vm.empty() || vm.count("help")) {
 		std::cout << desc << std::endl;
-		return 0;
 	}
 
 	if(vm.count("edit")) {
@@ -95,12 +117,32 @@ int main(int argc, char** argv)
 
 	} else if(vm.count("read")) {
 		notes::Archive ar;
-		auto path = notes::parse_date_as_path(read);
 
-		notes::load(ar, path);
+		fs::path path;
+		if(read[0] == '#') {
+			//read.erase(read.begin());
 
-		std::cout << ar << std::endl;
+			fs::sorted_directory_iterator iter(
+				notes::user_config.archive_path(), sort_by_date);
 
+			notes::Archive ar;
+			for(auto const& p : iter) {
+				notes::load(ar, p.path());
+
+				for(auto const& note : ar) {
+					if(note.is_tagged(read)) {
+						std::cout << note << std::endl;
+					}
+				}
+			}
+
+
+		} else {
+			auto path = notes::parse_date_as_path(read);
+			notes::load(ar, path);
+
+			std::cout << ar << std::endl;
+		}
 	} else if(vm.count("write")) {
 		notes::Archive ar;
 		fs::path path;
@@ -119,5 +161,20 @@ int main(int argc, char** argv)
 		ar.add(write, t);
 
 		notes::save(ar, path);
+	}
+}
+
+int main(int argc, char** argv)
+{
+	try {
+		run(argc, argv);
+	} catch(po::error const& e) {
+		std::cerr << "invalid options: " << e.what() << std::endl;
+	} catch(notes::Error const& e) {
+		std::cerr << "application error: " << e.what() << std::endl;
+	} catch(std::exception const& e) {
+		std::cerr << "system error: " << e.what() << std::endl;
+	} catch(...) {
+		std::cerr << "notes: undefined error" << std::endl;
 	}
 }

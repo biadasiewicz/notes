@@ -93,7 +93,8 @@ static std::string to_encrypted_string(std::string const& text)
 
 		return ciphertext;
 	} catch(std::exception& e) {
-		throw Archive_encryption_error(e.what());
+		throw Archive_encryption_error(
+			std::string("encryption error: ") + e.what());
 	} catch(...) {
 		throw Archive_encryption_error{};
 	}
@@ -124,7 +125,8 @@ static std::string to_decrypted_string(std::string const& encrypted)
 
 		return decrypted;
 	} catch(std::exception& e) {
-		throw Archive_decryption_error(e.what());
+		throw Archive_decryption_error(
+			std::string("decryption error: ") +e.what());
 	} catch(...) {
 		throw Archive_decryption_error{};
 	}
@@ -175,9 +177,14 @@ static std::string load(boost::filesystem::path const& path)
 {
 	std::ifstream file(path.string(), std::ios::binary);
 	if(!file) {
-		throw std::runtime_error(
-			std::string("failed to open file for load: ") +
-			strerror(errno));
+		std::string msg;
+		if(errno == ENOENT) {
+			msg += "archive at this date not exists";
+		} else {
+			msg += "failed to open file for laod: ";
+			msg += strerror(errno);
+		}
+		throw std::runtime_error(std::move(msg));
 	}
 
 	std::ostringstream oss;
@@ -268,8 +275,6 @@ fs::path parse_date_as_path(std::string const& date)
 
 	if(p.empty()) {
 		throw Error("invalid date format: " + date);
-	} else if(!fs::exists(p)) {
-		throw Error("archive at this date not exists: " + date);
 	}
 
 	return p;
