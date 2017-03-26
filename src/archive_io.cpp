@@ -280,4 +280,29 @@ fs::path parse_date_as_path(std::string const& date)
 	return p;
 }
 
+static std::tuple<int,int,int> parse_archive_filename(fs::path const& p)
+{
+	static std::regex reg("([0-9]+)_([0-9]+)_([0-9]+)");
+	std::smatch m;
+	decltype(auto) filename = p.filename().string();
+
+	if(!std::regex_match(filename, m, reg)) {
+		throw std::logic_error("invalid archive name: " + filename);
+	}
+
+	using std::stoi;
+	return std::make_tuple(
+		stoi(m[1].str()), stoi(m[2].str()), stoi(m[3].str()));
+}
+
+bool sort_archive_by_date(
+	boost::filesystem::directory_entry const& lhs,
+	boost::filesystem::directory_entry const& rhs)
+{
+	auto m1 = parse_archive_filename(lhs.path());
+	auto m2 = parse_archive_filename(rhs.path());
+
+	return m1 < m2;
+}
+
 }

@@ -61,6 +61,10 @@ void save(Archive& ar, boost::filesystem::path const& path);
 
 boost::filesystem::path parse_date_as_path(std::string const& date);
 
+bool sort_archive_by_date(
+	boost::filesystem::directory_entry const& lhs,
+	boost::filesystem::directory_entry const& rhs);
+
 }
 
 #endif

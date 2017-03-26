@@ -23,28 +23,6 @@ void parse_date_and_index(string const& arg, string& date, int& index)
 	index = std::stoi(match[2]);
 }
 
-static std::tuple<int,int,int> parse_archive_filename(fs::path const& p)
-{
-	static std::regex reg("([0-9]+)_([0-9]+)_([0-9]+)");
-	std::smatch m;
-	decltype(auto) filename = p.filename().string();
-
-	if(!std::regex_match(filename, m, reg)) {
-		throw std::logic_error("invalid archive name: " + filename);
-	}
-
-	using std::stoi;
-	return std::make_tuple(stoi(m[1].str()), stoi(m[2].str()), stoi(m[3].str()));
-}
-
-static bool sort_by_date(fs::directory_entry const& p1, fs::directory_entry const& p2)
-{
-	auto m1 = parse_archive_filename(p1.path());
-	auto m2 = parse_archive_filename(p2.path());
-
-	return m1 < m2;
-}
-
 void run(int argc, char** argv)
 {
 	string write;
@@ -123,7 +101,8 @@ void run(int argc, char** argv)
 			//read.erase(read.begin());
 
 			fs::sorted_directory_iterator iter(
-				notes::user_config.archive_path(), sort_by_date);
+				notes::user_config.archive_path(),
+					notes::sort_archive_by_date);
 
 			notes::Archive ar;
 			for(auto const& p : iter) {
