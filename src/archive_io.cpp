@@ -28,12 +28,14 @@ make_path_from_date
 {
 	std::string filename;
 	filename.reserve(year.size() + month.size() + day.size() + 2);
-	filename += std::move(year) + "_";
-	filename += std::move(month) + "_";
+	filename += std::move(year);
+	filename += '_';
+	filename += std::move(month);
+	filename += '_';
 	filename += std::move(day);
 
 	fs::path path = user_config.archive_path();
-	path /= filename;
+	path /= std::move(filename);
 
 	return path;
 }
