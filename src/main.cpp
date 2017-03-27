@@ -103,14 +103,20 @@ void run(int argc, char** argv)
 					notes::sort_archive_by_date);
 
 			notes::Archive ar;
+			bool found = false;
 			for(auto const& p : iter) {
 				notes::load(ar, p.path());
 
 				for(auto const& note : ar) {
 					if(note.is_tagged(read)) {
+						found = true;
 						std::cout << note << std::endl;
 					}
 				}
+			}
+
+			if(!found) {
+				std::cout << "tag not found: " << read << std::endl;
 			}
 
 
