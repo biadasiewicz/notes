@@ -115,10 +115,22 @@ void run(int argc, char** argv)
 
 
 		} else {
-			auto path = notes::parse_date_as_path(read);
-			notes::load(ar, path);
+			if(read == "all") {
+				fs::sorted_directory_iterator iter(
+					notes::user_config.archive_path(),
+					notes::sort_archive_by_date);
 
-			std::cout << ar << std::endl;
+				for(auto const& p : iter) {
+					notes::Archive ar;
+					notes::load(ar, p.path());
+					std::cout << ar << std::endl;
+				}
+			} else {
+				auto path = notes::parse_date_as_path(read);
+				notes::load(ar, path);
+
+				std::cout << ar << std::endl;
+			}
 		}
 	} else if(vm.count("write")) {
 		notes::Archive ar;

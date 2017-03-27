@@ -201,14 +201,18 @@ static std::string load(boost::filesystem::path const& path)
 
 void save(Archive& ar, boost::filesystem::path const& path)
 {
-	try {
-		auto str = to_string(ar);
-		auto encrypted = to_encrypted_string(str);
-		save(encrypted, path);
-	} catch(std::exception& e) {
-		throw Archive_save_error(e.what());
-	} catch(...) {
-		throw Archive_save_error{};
+	if(ar.empty() && fs::exists(path)) {
+		fs::remove(path);
+	} else {
+		try {
+			auto str = to_string(ar);
+			auto encrypted = to_encrypted_string(str);
+			save(encrypted, path);
+		} catch(std::exception& e) {
+			throw Archive_save_error(e.what());
+		} catch(...) {
+			throw Archive_save_error{};
+		}
 	}
 }
 
