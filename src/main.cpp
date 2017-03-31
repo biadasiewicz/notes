@@ -115,14 +115,17 @@ void read_func(string const& read)
 	}
 }
 
-void backup_func(string const& backup)
+void backup_func(fs::path const& dest)
 {
+	if(!fs::exists(dest)) {
+		fs::create_directories(dest);
+	}
+
 	auto source = notes::user_config.archive_path();
+	fs::sorted_directory_iterator iter(source);
 
-	try {
-
-	} catch(fs::filesystem_error const& e) {
-
+	for(auto const& p : iter) {
+		fs::copy(p.path(), dest / p.path().filename());
 	}
 }
 
