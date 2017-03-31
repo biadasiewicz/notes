@@ -23,6 +23,99 @@ void parse_date_and_index(string const& arg, string& date, int& index)
 	index = std::stoi(match[2]);
 }
 
+void edit_func(string const& edit, string const& write)
+{
+	string date;
+	int index;
+
+	parse_date_and_index(edit, date, index);
+
+	fs::path path = notes::parse_date_as_path(date);
+
+	notes::Archive ar;
+	notes::load(ar, path);
+
+	auto it = ar.index(index);
+
+	notes::Note temp(*it);
+
+	ar.remove(it);
+
+	temp = write;
+
+	ar.add(std::move(temp));
+
+	notes::save(ar, path);
+}
+
+void remove_func(string const& remove)
+{
+	notes::Archive ar;
+
+	string date;
+	int index;
+	parse_date_and_index(remove, date, index);
+
+	auto path = notes::parse_date_as_path(date);
+
+	notes::load(ar, path);
+
+	auto it = ar.index(index);
+
+	ar.remove(it);
+
+	notes::save(ar, path);
+}
+
+void read_func(string const& read)
+{
+	notes::Archive ar;
+
+	fs::path path;
+	if(read[0] == '#') {
+		fs::sorted_directory_iterator iter(
+			notes::user_config.archive_path(),
+				notes::sort_archive_by_date);
+
+		notes::Archive ar;
+		bool found = false;
+		for(auto const& p : iter) {
+			notes::load(ar, p.path());
+
+			for(auto const& note : ar) {
+				if(note.is_tagged(read)) {
+					found = true;
+					std::cout << note << std::endl;
+				}
+			}
+		}
+
+		if(!found) {
+			std::cout << "tag not found: " << read << std::endl;
+		}
+
+
+	} else {
+		if(read == "all") {
+			fs::sorted_directory_iterator iter(
+				notes::user_config.archive_path(),
+				notes::sort_archive_by_date);
+
+			for(auto const& p : iter) {
+				notes::Archive ar;
+				notes::load(ar, p.path());
+				std::cout << ar << std::endl;
+			}
+		} else {
+			auto path = notes::parse_date_as_path(read);
+			notes::load(ar, path);
+
+			std::cout << ar << std::endl;
+		}
+	}
+}
+
+
 void run(int argc, char** argv)
 {
 	string write;
@@ -30,6 +123,7 @@ void run(int argc, char** argv)
 	string read;
 	string edit;
 	string remove;
+	string backup;
 
 	po::options_description desc("notes application usage");
 	desc.add_options()
@@ -39,6 +133,7 @@ void run(int argc, char** argv)
 		("read,r", po::value<string>(&read), "date that will be readed")
 		("edit", po::value<string>(&edit), "date and index in archive that will be edited [date:index]")
 		("remove", po::value<string>(&remove), "date and index in archive that will be removed [date:index]")
+		("backup,b", po::value<string>(&backup), "backup archive at specified path")
 		;
 
 	po::variables_map vm;
@@ -54,90 +149,11 @@ void run(int argc, char** argv)
 			throw po::required_option("write");
 		}
 
-		string date;
-		int index;
-
-		parse_date_and_index(edit, date, index);
-
-		fs::path path = notes::parse_date_as_path(date);
-
-		notes::Archive ar;
-		notes::load(ar, path);
-
-		auto it = ar.index(index);
-
-		notes::Note temp(*it);
-
-		ar.remove(it);
-
-		temp = write;
-
-		ar.add(std::move(temp));
-
-		notes::save(ar, path);
-
+		edit_func(edit, write);
 	} else if(vm.count("remove")) {
-		notes::Archive ar;
-
-		string date;
-		int index;
-		parse_date_and_index(remove, date, index);
-
-		auto path = notes::parse_date_as_path(date);
-
-		notes::load(ar, path);
-
-		auto it = ar.index(index);
-
-		ar.remove(it);
-
-		notes::save(ar, path);
-
+		remove_func(remove);
 	} else if(vm.count("read")) {
-		notes::Archive ar;
-
-		fs::path path;
-		if(read[0] == '#') {
-			fs::sorted_directory_iterator iter(
-				notes::user_config.archive_path(),
-					notes::sort_archive_by_date);
-
-			notes::Archive ar;
-			bool found = false;
-			for(auto const& p : iter) {
-				notes::load(ar, p.path());
-
-				for(auto const& note : ar) {
-					if(note.is_tagged(read)) {
-						found = true;
-						std::cout << note << std::endl;
-					}
-				}
-			}
-
-			if(!found) {
-				std::cout << "tag not found: " << read << std::endl;
-			}
-
-
-		} else {
-			if(read == "all") {
-				fs::sorted_directory_iterator iter(
-					notes::user_config.archive_path(),
-					notes::sort_archive_by_date);
-
-				for(auto const& p : iter) {
-					notes::Archive ar;
-					notes::load(ar, p.path());
-					std::cout << ar << std::endl;
-				}
-			} else {
-				auto path = notes::parse_date_as_path(read);
-				notes::load(ar, path);
-
-				std::cout << ar << std::endl;
-			}
-		}
+		read_func(read);
 	} else if(vm.count("write")) {
 		notes::Archive ar;
 		fs::path path;
@@ -156,6 +172,13 @@ void run(int argc, char** argv)
 		ar.add(write, t);
 
 		notes::save(ar, path);
+	} else if(vm.count("backup")) {
+		auto source = notes::user_config.archive_path();
+
+		try {
+		} catch(fs::filesystem_error const& e) {
+
+		}
 	}
 }
 
