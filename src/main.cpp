@@ -115,6 +115,16 @@ void read_func(string const& read)
 	}
 }
 
+void backup_func(string const& backup)
+{
+	auto source = notes::user_config.archive_path();
+
+	try {
+
+	} catch(fs::filesystem_error const& e) {
+
+	}
+}
 
 void run(int argc, char** argv)
 {
@@ -173,12 +183,7 @@ void run(int argc, char** argv)
 
 		notes::save(ar, path);
 	} else if(vm.count("backup")) {
-		auto source = notes::user_config.archive_path();
-
-		try {
-		} catch(fs::filesystem_error const& e) {
-
-		}
+		backup_func(backup);
 	}
 }
 
