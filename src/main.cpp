@@ -168,7 +168,6 @@ void run(int argc, char** argv)
 	string edit;
 	string remove;
 	string backup;
-	string interactive;
 
 	po::options_description desc("notes application usage");
 	desc.add_options()
@@ -179,7 +178,6 @@ void run(int argc, char** argv)
 		("edit", po::value<string>(&edit), "date and index in archive that will be edited [date:index]")
 		("remove", po::value<string>(&remove), "date and index in archive that will be removed [date:index]")
 		("backup,b", po::value<string>(&backup), "backup archive at specified path")
-		("interactive,i", po::value<string>(&interactive), "interactive mode")
 		;
 
 	po::variables_map vm;
@@ -235,7 +233,7 @@ void run(int argc, char** argv)
 
 		using namespace std::chrono;
 
-		seconds interval{ std::stoi(interactive) };
+		seconds interval{ 60 };
 		autosave::Time_point last_time{ autosave::Clock::now() };
 		duration<float> elapsed{};
 
