@@ -153,9 +153,7 @@ void autosave_func(notes::Archive& ar, std::vector<notes::Note>& buffer)
 			ar.add(std::move(note));
 		}
 		buffer.clear();
-		std::cout << "buffer..." << std::endl;
 	}
-	std::cout << "end buffer..." << std::endl;
 }
 
 }
@@ -251,7 +249,6 @@ void run(int argc, char** argv)
 			if(elapsed > interval) {
 				elapsed = decltype(elapsed){};
 				autosave::var.notify_all();
-				std::cout << "elapsed..." << std::endl;
 			}
 			last_time = now;
 		}
@@ -261,9 +258,6 @@ void run(int argc, char** argv)
 		autosave_thread.join();
 
 		notes::save(ar, path);
-		fs::remove(path);
-
-		std::cout << ar << std::endl;
 	}
 }
 
