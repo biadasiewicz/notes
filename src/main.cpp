@@ -6,6 +6,11 @@
 #include <iostream>
 #include <regex>
 #include <string>
+#include <vector>
+#include <chrono>
+#include <thread>
+#include <atomic>
+#include <condition_variable>
 
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
@@ -129,6 +134,32 @@ void backup_func(fs::path const& dest)
 	}
 }
 
+namespace autosave
+{
+
+using Clock = std::chrono::system_clock;
+using Time_point = Clock::time_point;
+
+std::mutex mut;
+std::condition_variable var;
+std::atomic<bool> exit{ false };
+
+void autosave_func(notes::Archive& ar, std::vector<notes::Note>& buffer)
+{
+	while(exit.load() == false) {
+		std::unique_lock<std::mutex> lock{ mut };
+		var.wait(lock);
+		for(auto& note : buffer) {
+			ar.add(std::move(note));
+		}
+		buffer.clear();
+		std::cout << "buffer..." << std::endl;
+	}
+	std::cout << "end buffer..." << std::endl;
+}
+
+}
+
 void run(int argc, char** argv)
 {
 	string write;
@@ -137,6 +168,7 @@ void run(int argc, char** argv)
 	string edit;
 	string remove;
 	string backup;
+	string interactive;
 
 	po::options_description desc("notes application usage");
 	desc.add_options()
@@ -147,7 +179,7 @@ void run(int argc, char** argv)
 		("edit", po::value<string>(&edit), "date and index in archive that will be edited [date:index]")
 		("remove", po::value<string>(&remove), "date and index in archive that will be removed [date:index]")
 		("backup,b", po::value<string>(&backup), "backup archive at specified path")
-		("interactive,i", "interactive mode")
+		("interactive,i", po::value<string>(&interactive), "interactive mode")
 		;
 
 	po::variables_map vm;
@@ -196,12 +228,43 @@ void run(int argc, char** argv)
 			notes::load(ar, path);
 		}
 
+		std::vector<notes::Note> buffer;
+
+		std::thread autosave_thread{ autosave::autosave_func,
+			std::ref(ar), std::ref(buffer) };
+
+		using namespace std::chrono;
+
+		seconds interval{ std::stoi(interactive) };
+		autosave::Time_point last_time{ autosave::Clock::now() };
+		duration<float> elapsed{};
+
 		string line;
 		while(getline(std::cin, line)) {
-			ar.add(line, time(0));
+			{
+				std::lock_guard<std::mutex> lock{ autosave::mut };
+				buffer.emplace_back(std::move(line), time(0));
+			}
+
+
+			auto now = autosave::Clock::now();
+			elapsed += duration_cast<duration<float>>(now - last_time);
+			if(elapsed > interval) {
+				elapsed = decltype(elapsed){};
+				autosave::var.notify_all();
+				std::cout << "elapsed..." << std::endl;
+			}
+			last_time = now;
 		}
 
+		autosave::exit.store(true);
+		autosave::var.notify_all();
+		autosave_thread.join();
+
 		notes::save(ar, path);
+		fs::remove(path);
+
+		std::cout << ar << std::endl;
 	}
 }
 
