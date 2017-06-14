@@ -178,6 +178,7 @@ void run(int argc, char** argv)
 		("edit", po::value<string>(&edit), "date and index in archive that will be edited [date:index]")
 		("remove", po::value<string>(&remove), "date and index in archive that will be removed [date:index]")
 		("backup,b", po::value<string>(&backup), "backup archive at specified path")
+		("interactive,i", "interactive mode")
 		;
 
 	po::variables_map vm;
