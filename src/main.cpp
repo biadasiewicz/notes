@@ -144,7 +144,7 @@ std::mutex mut;
 std::condition_variable var;
 std::atomic<bool> exit{ false };
 
-void autosave_func(notes::Archive& ar, std::vector<notes::Note>& buffer)
+void autosave_daemon(notes::Archive& ar, std::vector<notes::Note>& buffer)
 {
 	while(exit.load() == false) {
 		std::unique_lock<std::mutex> lock{ mut };
@@ -156,6 +156,50 @@ void autosave_func(notes::Archive& ar, std::vector<notes::Note>& buffer)
 	}
 }
 
+} //namespace autosave
+
+void interactive_mode()
+{
+	fs::path path = notes::make_path_from_date(time(0));
+	notes::Archive ar;
+
+	if(fs::exists(path)) {
+		notes::load(ar, path);
+	}
+
+	std::vector<notes::Note> buffer;
+
+	std::thread autosave_thread{ autosave::autosave_daemon,
+		std::ref(ar), std::ref(buffer) };
+
+	using namespace std::chrono;
+
+	seconds interval{ 60 };
+	autosave::Time_point last_time{ autosave::Clock::now() };
+	duration<float> elapsed{};
+
+	string line;
+	while(getline(std::cin, line)) {
+		{
+			std::lock_guard<std::mutex> lock{ autosave::mut };
+			buffer.emplace_back(std::move(line), time(0));
+		}
+
+
+		auto now = autosave::Clock::now();
+		elapsed += duration_cast<duration<float>>(now - last_time);
+		if(elapsed > interval) {
+			elapsed = decltype(elapsed){};
+			autosave::var.notify_all();
+		}
+		last_time = now;
+	}
+
+	autosave::exit.store(true);
+	autosave::var.notify_all();
+	autosave_thread.join();
+
+	notes::save(ar, path);
 }
 
 void run(int argc, char** argv)
@@ -218,46 +262,7 @@ void run(int argc, char** argv)
 	} else if(vm.count("backup")) {
 		backup_func(backup);
 	} else if(vm.count("interactive")) {
-		fs::path path = notes::make_path_from_date(time(0));
-		notes::Archive ar;
-
-		if(fs::exists(path)) {
-			notes::load(ar, path);
-		}
-
-		std::vector<notes::Note> buffer;
-
-		std::thread autosave_thread{ autosave::autosave_func,
-			std::ref(ar), std::ref(buffer) };
-
-		using namespace std::chrono;
-
-		seconds interval{ 60 };
-		autosave::Time_point last_time{ autosave::Clock::now() };
-		duration<float> elapsed{};
-
-		string line;
-		while(getline(std::cin, line)) {
-			{
-				std::lock_guard<std::mutex> lock{ autosave::mut };
-				buffer.emplace_back(std::move(line), time(0));
-			}
-
-
-			auto now = autosave::Clock::now();
-			elapsed += duration_cast<duration<float>>(now - last_time);
-			if(elapsed > interval) {
-				elapsed = decltype(elapsed){};
-				autosave::var.notify_all();
-			}
-			last_time = now;
-		}
-
-		autosave::exit.store(true);
-		autosave::var.notify_all();
-		autosave_thread.join();
-
-		notes::save(ar, path);
+		interactive_mode();
 	}
 }
 
