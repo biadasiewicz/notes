@@ -142,9 +142,10 @@ using Time_point = Clock::time_point;
 
 std::mutex mut;
 std::condition_variable var;
+std::condition_variable write_to_disk_var;
 std::atomic<bool> exit{ false };
 
-void autosave_daemon(notes::Archive& ar, std::vector<notes::Note>& buffer)
+void add_to_archive_daemon(notes::Archive& ar, std::vector<notes::Note>& buffer)
 {
 	while(exit.load() == false) {
 		std::unique_lock<std::mutex> lock{ mut };
@@ -153,6 +154,15 @@ void autosave_daemon(notes::Archive& ar, std::vector<notes::Note>& buffer)
 			ar.add(std::move(note));
 		}
 		buffer.clear();
+	}
+}
+
+void write_to_disk_daemon(notes::Archive& ar, fs::path const& path)
+{
+	while(exit.load() == false) {
+		std::unique_lock<std::mutex> lock{ mut };
+		write_to_disk_var.wait(lock);
+		notes::save(ar, path);
 	}
 }
 
@@ -169,7 +179,7 @@ void interactive_mode()
 
 	std::vector<notes::Note> buffer;
 
-	std::thread autosave_thread{ autosave::autosave_daemon,
+	std::thread ata_daemon{ autosave::add_to_archive_daemon,
 		std::ref(ar), std::ref(buffer) };
 
 	using namespace std::chrono;
@@ -177,6 +187,13 @@ void interactive_mode()
 	seconds interval{ 60 };
 	autosave::Time_point last_time{ autosave::Clock::now() };
 	duration<float> elapsed{};
+
+	std::thread wtd_daemon{ autosave::write_to_disk_daemon,
+		std::ref(ar), std::ref(path) };
+
+	auto write_to_disk_interval = minutes{ 10 };
+	autosave::Time_point last_time_wtd{ autosave::Clock::now() };
+	duration<float> elapsed_wtd{};
 
 	string line;
 	while(getline(std::cin, line)) {
@@ -193,13 +210,21 @@ void interactive_mode()
 			autosave::var.notify_all();
 		}
 		last_time = now;
+
+		elapsed_wtd += duration_cast<duration<float>>(now - last_time_wtd);
+		if(elapsed_wtd > write_to_disk_interval) {
+			elapsed_wtd = decltype(elapsed_wtd){};
+			autosave::write_to_disk_var.notify_all();
+		}
+		last_time_wtd = now;
 	}
 
 	autosave::exit.store(true);
 	autosave::var.notify_all();
-	autosave_thread.join();
+	ata_daemon.join();
 
-	notes::save(ar, path);
+	autosave::write_to_disk_var.notify_all();
+	wtd_daemon.join();
 }
 
 void run(int argc, char** argv)
