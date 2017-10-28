@@ -32,6 +32,14 @@ void write_daemon()
 	}
 }
 
+decltype(auto) prompt(std::string& line)
+{
+	time_t t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+	std::tm* time = localtime(&t);
+	cout << time->tm_hour << ":" << time->tm_min << " >>> ";
+	return std::getline(cin, line);
+}
+
 void interactive_mode()
 {
 	path = make_path_from_date(time(0));
@@ -47,7 +55,7 @@ void interactive_mode()
 	auto interval = chrono::seconds(10);
 
 	string line;
-	while(getline(cin, line)) {
+	while(prompt(line)) {
 		{
 			lock_guard<mutex> lock(mut);
 			archive.add(std::move(line));
