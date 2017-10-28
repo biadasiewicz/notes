@@ -34,12 +34,7 @@ void write_daemon()
 
 decltype(auto) prompt(std::string& line)
 {
-	time_t t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-	std::tm* time = localtime(&t);
-	cout << time->tm_hour << ":";
-	if(time->tm_min < 10)
-		cout << "0";
-	cout << time->tm_min << " >>> ";
+	cout << ">>> ";
 	return std::getline(cin, line);
 }
 
